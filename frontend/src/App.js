@@ -3,6 +3,7 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+import { startReminderScheduler, stopReminderScheduler } from "@/lib/reminders";
 
 import Login from "@/pages/Login";
 import AuthCallback from "@/pages/AuthCallback";
@@ -17,6 +18,10 @@ import { Loader2 } from "lucide-react";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
+  React.useEffect(() => {
+    if (user) startReminderScheduler();
+    return () => stopReminderScheduler();
+  }, [user]);
   if (loading) return (
     <div className="grid min-h-screen place-items-center bg-black text-white/70">
       <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-gold"/> Loading…</div>

@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { LANGS, speechCodeFor } from "@/lib/langs";
 import { getRecognition, speak, stopSpeaking } from "@/lib/speech";
-import { Compass, MonitorPlay, MonitorX, Camera, Mic, MicOff, Send, Loader2, Volume2, VolumeX, Sparkles } from "lucide-react";
+import { Compass, MonitorPlay, MonitorX, Camera, Mic, MicOff, Send, Loader2, Volume2, VolumeX, Sparkles, Ear, EarOff } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Navigation() {
@@ -18,9 +18,18 @@ export default function Navigation() {
   const [usage, setUsage] = useState({ daily_used: 0, daily_limit: 10, free_remaining: 5 });
   const [listening, setListening] = useState(false);
   const [captured, setCaptured] = useState(null);
+  const [wakeOn, setWakeOn] = useState(false);
+  const [wakeStatus, setWakeStatus] = useState("Standby"); // "Standby" | "Heard wake word — listening…" | "Processing…"
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const recRef = useRef(null);
+  const wakeRef = useRef(null);
+  const wakeOnRef = useRef(false);
+  const commandUntilRef = useRef(0);
+  const askAIRef = useRef(null);
+  const languageRef = useRef("auto");
+  const voiceOnRef = useRef(true);
+  const busyRef = useRef(false);
 
   const loadUsage = async () => {
     try { const { data } = await api.get("/navigation/usage"); setUsage(data); } catch {}
@@ -65,16 +74,18 @@ export default function Navigation() {
     return dataUrl;
   };
 
-  const askAI = async () => {
-    if (!question.trim()) { toast.error("Type or speak a question"); return; }
+  const askAI = async (overrideQuestion) => {
+    const q = (overrideQuestion ?? question).trim();
+    if (!q) { toast.error("Type or speak a question"); return; }
     let img = captured;
     if (!img) img = capture();
     if (!img) return;
 
     setLoading(true);
+    busyRef.current = true;
     setAnswer("");
     try {
-      const { data } = await api.post("/navigation/analyze", { image_base64: img, question: question.trim(), language });
+      const { data } = await api.post("/navigation/analyze", { image_base64: img, question: q, language });
       setAnswer(data.answer);
       setUsage(data.usage);
       window.dispatchEvent(new Event("nav-usage-updated"));
@@ -84,11 +95,108 @@ export default function Navigation() {
       toast.error(msg);
     } finally {
       setLoading(false);
+      busyRef.current = false;
+      if (wakeOnRef.current) setWakeStatus("Say “Zero Two…”");
     }
   };
 
+  // Keep refs synced with latest state for use inside wake-word callbacks
+  useEffect(() => { askAIRef.current = askAI; }); // no deps: refresh on every render
+  useEffect(() => { languageRef.current = language; voiceOnRef.current = voiceOn; }, [language, voiceOn]);
+  useEffect(() => { wakeOnRef.current = wakeOn; }, [wakeOn]);
+
+  // Wake-word: continuous background listener that triggers on "zero two" / "hey zero two"
+  const startWake = () => {
+    const rec = getRecognition();
+    if (!rec) { toast.error("Voice input not supported in this browser"); return false; }
+    rec.lang = "en-US"; // wake word is English regardless of AI response language
+    rec.interimResults = true;
+    rec.continuous = true;
+    let lastFinalIdx = 0;
+
+    const processFinal = (finalChunk) => {
+      const lower = finalChunk.toLowerCase();
+      const m = lower.match(/(?:hey\s+)?zero\s*two[,.!?\s]*(.*)$/i);
+      if (m) {
+        const trailing = (m[1] || "").trim();
+        if (trailing.split(/\s+/).filter(Boolean).length >= 2) {
+          // We already have the command in the same utterance
+          commandUntilRef.current = 0;
+          setWakeStatus("Processing…");
+          if (!busyRef.current) askAIRef.current?.(trailing);
+        } else {
+          // Just the wake word — listen for the command in the next 8s of finals
+          commandUntilRef.current = Date.now() + 8000;
+          setWakeStatus("Heard wake word — listening…");
+          try { speak("Yes?", "en-US"); } catch {}
+        }
+      } else if (Date.now() < commandUntilRef.current) {
+        // We are in command window; treat this final chunk as the command
+        commandUntilRef.current = 0;
+        setWakeStatus("Processing…");
+        if (!busyRef.current) askAIRef.current?.(finalChunk.trim());
+      }
+    };
+
+    rec.onresult = (e) => {
+      for (let i = lastFinalIdx; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          processFinal(e.results[i][0].transcript);
+          lastFinalIdx = i + 1;
+        }
+      }
+    };
+    rec.onend = () => {
+      // Chrome auto-stops; restart if still on
+      if (wakeOnRef.current) {
+        try { rec.start(); } catch { setTimeout(() => { try { rec.start(); } catch {} }, 400); }
+      } else {
+        setWakeStatus("Standby");
+      }
+    };
+    rec.onerror = (ev) => {
+      if (ev?.error === "not-allowed" || ev?.error === "service-not-allowed") {
+        setWakeOn(false); wakeOnRef.current = false;
+        toast.error("Microphone permission denied");
+      }
+    };
+
+    try { rec.start(); } catch {}
+    wakeRef.current = rec;
+    return true;
+  };
+
+  const stopWake = () => {
+    wakeOnRef.current = false;
+    try { wakeRef.current?.stop(); } catch {}
+    wakeRef.current = null;
+    setWakeStatus("Standby");
+  };
+
+  const toggleWake = () => {
+    if (wakeOn) {
+      setWakeOn(false);
+      stopWake();
+      toast("Wake word off");
+    } else {
+      // Pause manual listening if any
+      try { recRef.current?.stop(); } catch {}
+      wakeOnRef.current = true;
+      if (startWake()) {
+        setWakeOn(true);
+        setWakeStatus("Say “Zero Two…”");
+        toast('Say "Zero Two" or "Hey Zero Two" to start');
+      }
+    }
+  };
+
+  useEffect(() => () => stopWake(), []);
+
   const toggleMic = () => {
     if (listening) { recRef.current?.stop(); setListening(false); return; }
+    // Pause wake-word while manual mic runs (browsers allow only one SR at a time)
+    const wakeWasOn = wakeOn;
+    if (wakeWasOn) { try { wakeRef.current?.stop(); } catch {} }
     const rec = getRecognition();
     if (!rec) { toast.error("Voice input not supported"); return; }
     rec.lang = speechCodeFor(language === "auto" ? "en" : language);
@@ -103,7 +211,12 @@ export default function Navigation() {
       }
       setQuestion((final || text).trim());
     };
-    rec.onend = () => setListening(false);
+    rec.onend = () => {
+      setListening(false);
+      if (wakeWasOn && wakeOnRef.current) {
+        setTimeout(() => { try { wakeRef.current && wakeRef.current.start(); } catch { startWake(); } }, 300);
+      }
+    };
     rec.onerror = () => setListening(false);
     recRef.current = rec; rec.start(); setListening(true);
   };
@@ -129,6 +242,14 @@ export default function Navigation() {
             </Select>
             <Button data-testid="nav-voice-toggle" variant="outline" onClick={() => { if (voiceOn) stopSpeaking(); setVoiceOn(!voiceOn); }} className="border-white/10 bg-black/40 text-white hover:bg-white/10">
               {voiceOn ? <><Volume2 className="h-4 w-4"/> Voice ON</> : <><VolumeX className="h-4 w-4"/> Voice OFF</>}
+            </Button>
+            <Button
+              data-testid="wake-toggle"
+              variant="outline"
+              onClick={toggleWake}
+              className={`border-white/10 bg-black/40 text-white hover:bg-white/10 ${wakeOn ? "border-gold/60 text-gold gold-glow" : ""}`}
+            >
+              {wakeOn ? <><Ear className="h-4 w-4"/> Wake ON</> : <><EarOff className="h-4 w-4"/> Wake OFF</>}
             </Button>
           </div>
         </div>
@@ -184,6 +305,12 @@ export default function Navigation() {
           <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.08]">
             <div className="h-full bg-gold transition-all" style={{ width: `${pct}%` }} />
           </div>
+
+          {wakeOn && (
+            <div data-testid="wake-status" className="mb-3 flex items-center gap-2 rounded-lg border border-gold/30 bg-gold/[0.06] px-3 py-2 text-xs text-gold">
+              <span className="inline-block h-2 w-2 rounded-full bg-gold animate-pulse-gold"/> {wakeStatus}
+            </div>
+          )}
 
           <div className="flex items-end gap-2">
             <Button data-testid="nav-mic-button" onClick={toggleMic} variant="outline" className={`h-11 w-11 shrink-0 rounded-xl border-white/10 bg-black/60 ${listening ? "text-red-400 animate-pulse-gold" : "text-gold"}`}>
