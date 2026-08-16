@@ -75,7 +75,8 @@ export default function Navigation() {
   };
 
   const askAI = async (overrideQuestion) => {
-    const q = (overrideQuestion ?? question).trim();
+    const override = typeof overrideQuestion === "string" ? overrideQuestion : null;
+    const q = (override ?? question).trim();
     if (!q) { toast.error("Type or speak a question"); return; }
     let img = captured;
     if (!img) img = capture();
