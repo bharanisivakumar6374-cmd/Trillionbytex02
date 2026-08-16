@@ -14,4 +14,4 @@ Disallow: /report
 # Backend API — never index
 Disallow: /api/
 
-Sitemap: https://chat-nav-voice.preview.emergentagent.com/sitemap.xml
+Sitemap: https://trillionbytex.in/sitemap.xml
