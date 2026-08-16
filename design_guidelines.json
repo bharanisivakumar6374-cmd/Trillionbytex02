@@ -1,0 +1,129 @@
+{
+  "theme": "Aureate Command Center (Premium Black + Gold Futuristic)",
+  "description": "A high-end, luxury AI assistant dashboard. Blends futuristic command center aesthetics with premium fashion/luxury gold accents. Focuses on processing fluency, extreme spacing, and crystal glassmorphism.",
+  "typography": {
+    "headings": {
+      "fontFamily": "Outfit, sans-serif",
+      "strategy": "The 'Editorial Future' archetype. Wide, clean geometric sans for a sophisticated, futuristic tone. Never use Inter for headings.",
+      "styles": {
+        "h1": "text-4xl sm:text-5xl font-light tracking-tight",
+        "h2": "text-2xl sm:text-3xl font-medium tracking-tight",
+        "h3": "text-xl font-medium",
+        "labels": "uppercase text-xs tracking-[0.2em] font-bold text-muted-foreground"
+      }
+    },
+    "body": {
+      "fontFamily": "Manrope, sans-serif",
+      "strategy": "Highly legible, geometric body font that pairs seamlessly with Outfit.",
+      "styles": {
+        "base": "text-base leading-relaxed",
+        "small": "text-sm leading-relaxed"
+      }
+    }
+  },
+  "colors": {
+    "strategy": "Archetype 5: Luxury. Deep void black as the anchor, metallic gold as the singular focal point. No rainbow gradients, no default SaaS blues.",
+    "dark": {
+      "background": "#050505",
+      "foreground": "#FAFAFA",
+      "primary": "#D4AF37",
+      "primary_foreground": "#000000",
+      "card": "rgba(18, 18, 18, 0.4)",
+      "card_foreground": "#FAFAFA",
+      "popover": "#0A0A0A",
+      "popover_foreground": "#FAFAFA",
+      "muted": "#1F1F1F",
+      "muted_foreground": "#A1A1AA",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "ring": "#D4AF37"
+    },
+    "light": {
+      "background": "#FDFBF7",
+      "foreground": "#0A0A0A",
+      "primary": "#B38728",
+      "primary_foreground": "#FFFFFF",
+      "card": "rgba(255, 255, 255, 0.6)",
+      "card_foreground": "#0A0A0A",
+      "popover": "#FFFFFF",
+      "popover_foreground": "#0A0A0A",
+      "muted": "#F3F3F3",
+      "muted_foreground": "#666666",
+      "border": "rgba(0, 0, 0, 0.08)",
+      "ring": "#B38728"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "surface": "Crystal Variant (Apple-style)",
+      "classes": "backdrop-blur-2xl bg-black/60 dark:bg-black/60 bg-white/70 backdrop-saturate-150",
+      "borders": "border border-white/10 dark:border-white/10 border-black/5",
+      "shadows": "shadow-[0_8px_32px_rgba(0,0,0,0.12)]",
+      "rules": "Use for the Sidebar, Top Header, and Settings Cards. CRITICAL: Never use fully transparent backgrounds where text scrolls underneath."
+    },
+    "tracing_beam": {
+      "usage": "Use specifically for the prominent 'Navigation Mode' button to highlight its primary importance.",
+      "style": "A subtle gold gradient border that glows, combined with a hover state that lifts and brightens."
+    }
+  },
+  "layouts": {
+    "app_structure": {
+      "type": "Dashboard Grid",
+      "classes": "grid h-screen w-full md:grid-cols-[280px_1fr] bg-background",
+      "sidebar": "Hidden on mobile (use Shadcn Sheet for hamburger), visible on md+. Must have glassmorphism over any background elements.",
+      "main_content": "Flex column, full height. Contains sticky header (glass) and scrollable chat area."
+    },
+    "spacing": {
+      "philosophy": "Generous Spacing (2-3x normal). Use p-6 to p-8 inside cards. The chat bubbles must have breathing room (gap-6 between messages)."
+    }
+  },
+  "motion": {
+    "micro_interactions": {
+      "hover": "All buttons: transition-transform duration-200 hover:-translate-y-[2px] active:translate-y-0",
+      "entrance": "Staggered fade-up for chat list and schedule items (opacity-0 translate-y-2 to opacity-100 translate-y-0)."
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure gold text on white/black meets minimum 4.5:1 WCAG AA. If gold on white fails, use darker #997300.",
+    "testing": "All interactive elements MUST have a data-testid attribute in kebab-case, role-based format (e.g., data-testid='new-chat-button').",
+    "focus": "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+  },
+  "media": {
+    "image_urls": {
+      "login_background": {
+        "url": "https://images.unsplash.com/photo-1698191373970-228c25ee6fd0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjBsdXh1cnklMjBnb2xkJTIwM2QlMjB0ZXh0dXJlfGVufDB8fHx8MTc4Njg3MDkwMXww&ixlib=rb-4.1.0&q=85",
+        "category": "background",
+        "description": "Abstract dark luxury gold wavy lines. Use as a full-bleed background on the Google Login screen with a glassmorphism overlay card for the login form."
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "instructions": "Use Lucide React (pre-installed). For the Navigation button, use icons like Compass or MonitorPlay."
+    }
+  },
+  "components_instructions": {
+    "Navigation_Button": "Must be visually distinct from normal sidebar links. Use a gold background or gold tracing border. text-primary-foreground (black) if bg is gold.",
+    "Chat_Bubbles": "User bubbles: flat primary or muted dark grey. AI bubbles: transparent with subtle border or glassmorphism. Add a golden subtle glow to the AI avatar icon.",
+    "Usage_Counter": "Display prominently but elegantly in the sidebar. Example: '3 / 10 Sessions' with a thin gold progress bar.",
+    "Settings_Panel": "Avoid card overuse. Use flat, rectangular layouts separated by delicate 1px border-white/10 lines.",
+    "Language_Selector": "Use Shadcn Select/DropdownMenu. CRITICAL: The dropdown content must have a solid or highly opaque glass background (e.g., bg-popover or bg-black/90). NO fully transparent backgrounds.",
+    "Navigation_Mode_Panel": "When active, split screen or prominent overlay showing the shared screen (video element) and the AI's explanation panel side-by-side or stacked on mobile.",
+    "Forms": "Use Shadcn Input, Switch, Select for Settings and Schedules. Customize to match the Black + Gold theme (remove default blue rings, use ring-primary)."
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) and saturate(150%).",
+    "You MUST NOT apply universal transition. Eg: transition: all. Always add transitions for specific properties like transform and opacity.",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file.",
+    "Always use modern button styles like pill-shaped or rounded-lg with interaction animations.",
+    "NEVER use AI assistant Emoji characters like \ud83e\udd16\ud83e\udde0\ud83d\udcad\ud83d\udca1\ud83d\udd2e\ud83c\udfaf for icons. Use lucide-react.",
+    "Every interaction needs micro-animations - hover states, transitions, entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "All interactive and key informational elements MUST include a data-testid attribute to facilitate robust automated testing.",
+    "Use `sonner` for toasts. Install if not available, or use Shadcn toast.",
+    "DO NOT use completely transparent backgrounds in dropdowns, headers, or overlays where content is underneath.",
+    "Update tailwind.config.js to include the defined Outfit and Manrope fonts, and custom colors."
+  ]
+}

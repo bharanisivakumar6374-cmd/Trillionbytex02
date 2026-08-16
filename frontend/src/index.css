@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 42 61% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 42 61% 43%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 42 61% 43%;
+    --radius: 0.75rem;
+  }
+  .dark {
+    --background: 0 0% 2%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 45 71% 52%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 45 71% 52%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 62% 41%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 45 71% 52%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html, body { @apply bg-background text-foreground; }
+  body {
+    font-family: "Manrope", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #050505;
+    color: #FAFAFA;
+    min-height: 100vh;
+  }
+  h1, h2, h3, h4, h5, h6, .font-heading { font-family: "Outfit", sans-serif; letter-spacing: -0.01em; }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-2xl bg-black/60 border border-white/10;
+    backdrop-filter: blur(24px) saturate(150%);
+  }
+  .glass-light {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+  .gold-border {
+    border-image: linear-gradient(135deg, #D4AF37 0%, #997300 50%, #E8C766 100%) 1;
+  }
+  .gold-glow {
+    box-shadow: 0 0 0 1px rgba(212,175,55,0.5), 0 8px 32px -12px rgba(212,175,55,0.35);
+  }
+  .btn-gold {
+    background: linear-gradient(180deg, #E8C766 0%, #D4AF37 100%);
+    color: #000;
+  }
+  .btn-gold:hover { filter: brightness(1.08); }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.25); border-radius: 999px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+}
+
+[data-debug-wrapper="true"] { display: contents !important; }
