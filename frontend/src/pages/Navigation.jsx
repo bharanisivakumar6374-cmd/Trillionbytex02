@@ -97,7 +97,7 @@ export default function Navigation() {
     } finally {
       setLoading(false);
       busyRef.current = false;
-      if (wakeOnRef.current) setWakeStatus("Say “Zero Two…”");
+      if (wakeOnRef.current) setWakeStatus("Listening… just speak");
     }
   };
 
@@ -106,49 +106,40 @@ export default function Navigation() {
   useEffect(() => { languageRef.current = language; voiceOnRef.current = voiceOn; }, [language, voiceOn]);
   useEffect(() => { wakeOnRef.current = wakeOn; }, [wakeOn]);
 
-  // Wake-word: continuous background listener that triggers on "zero two" / "hey zero two"
+  // Always Listen: continuous background listener. Any speech becomes a question.
   const startWake = () => {
     const rec = getRecognition();
-    if (!rec) { toast.error("Voice input not supported in this browser"); return false; }
-    rec.lang = "en-US"; // wake word is English regardless of AI response language
+    if (!rec) { toast.error("Voice input not supported in this browser (try Chrome or Edge)"); return false; }
+    rec.lang = speechCodeFor(languageRef.current === "auto" ? "en" : languageRef.current);
     rec.interimResults = true;
     rec.continuous = true;
     let lastFinalIdx = 0;
 
-    const processFinal = (finalChunk) => {
-      const lower = finalChunk.toLowerCase();
-      const m = lower.match(/(?:hey\s+)?zero\s*two[,.!?\s]*(.*)$/i);
-      if (m) {
-        const trailing = (m[1] || "").trim();
-        if (trailing.split(/\s+/).filter(Boolean).length >= 2) {
-          // We already have the command in the same utterance
-          commandUntilRef.current = 0;
-          setWakeStatus("Processing…");
-          if (!busyRef.current) askAIRef.current?.(trailing);
-        } else {
-          // Just the wake word — listen for the command in the next 8s of finals
-          commandUntilRef.current = Date.now() + 8000;
-          setWakeStatus("Heard wake word — listening…");
-          try { speak("Yes?", "en-US"); } catch {}
-        }
-      } else if (Date.now() < commandUntilRef.current) {
-        // We are in command window; treat this final chunk as the command
-        commandUntilRef.current = 0;
-        setWakeStatus("Processing…");
-        if (!busyRef.current) askAIRef.current?.(finalChunk.trim());
-      }
+    const submit = (text) => {
+      const cleaned = (text || "").trim();
+      if (cleaned.split(/\s+/).filter(Boolean).length < 2) return; // ignore ultra-short noise
+      if (busyRef.current) return;
+      // Ignore if TTS is currently speaking (avoid the AI hearing itself)
+      if (typeof window !== "undefined" && window.speechSynthesis && window.speechSynthesis.speaking) return;
+      setWakeStatus("Processing…");
+      setQuestion(cleaned);
+      askAIRef.current?.(cleaned);
     };
 
     rec.onresult = (e) => {
+      let interim = "";
       for (let i = lastFinalIdx; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          processFinal(e.results[i][0].transcript);
+        const r = e.results[i];
+        if (r.isFinal) {
+          submit(r[0].transcript);
           lastFinalIdx = i + 1;
+        } else {
+          interim += r[0].transcript;
         }
       }
+      if (interim && !busyRef.current) setWakeStatus(`Listening: ${interim.trim().slice(0, 60)}`);
     };
     rec.onend = () => {
-      // Chrome auto-stops; restart if still on
       if (wakeOnRef.current) {
         try { rec.start(); } catch { setTimeout(() => { try { rec.start(); } catch {} }, 400); }
       } else {
@@ -158,7 +149,9 @@ export default function Navigation() {
     rec.onerror = (ev) => {
       if (ev?.error === "not-allowed" || ev?.error === "service-not-allowed") {
         setWakeOn(false); wakeOnRef.current = false;
-        toast.error("Microphone permission denied");
+        toast.error("Microphone permission denied. Enable mic in the browser address bar.");
+      } else if (ev?.error === "no-speech") {
+        // silent — will auto-restart via onend
       }
     };
 
@@ -178,15 +171,15 @@ export default function Navigation() {
     if (wakeOn) {
       setWakeOn(false);
       stopWake();
-      toast("Wake word off");
+      toast("Always Listen off");
     } else {
       // Pause manual listening if any
       try { recRef.current?.stop(); } catch {}
       wakeOnRef.current = true;
       if (startWake()) {
         setWakeOn(true);
-        setWakeStatus("Say “Zero Two…”");
-        toast('Say "Zero Two" or "Hey Zero Two" to start');
+        setWakeStatus("Listening… just speak");
+        toast("Always Listen ON — just speak your question");
       }
     }
   };
@@ -250,7 +243,7 @@ export default function Navigation() {
               onClick={toggleWake}
               className={`border-white/10 bg-black/40 text-white hover:bg-white/10 ${wakeOn ? "border-gold/60 text-gold gold-glow" : ""}`}
             >
-              {wakeOn ? <><Ear className="h-4 w-4"/> Wake ON</> : <><EarOff className="h-4 w-4"/> Wake OFF</>}
+              {wakeOn ? <><Ear className="h-4 w-4"/> Always Listen</> : <><EarOff className="h-4 w-4"/> Auto-Listen</>}
             </Button>
           </div>
         </div>

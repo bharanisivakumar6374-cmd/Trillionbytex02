@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /$
+Allow: /static/
+Allow: /favicon.ico
+
+# Protected / authenticated app routes — no SEO value
+Disallow: /chat
+Disallow: /navigation
+Disallow: /schedules
+Disallow: /settings
+Disallow: /help
+Disallow: /report
+
+# Backend API — never index
+Disallow: /api/
+
+Sitemap: https://chat-nav-voice.preview.emergentagent.com/sitemap.xml
